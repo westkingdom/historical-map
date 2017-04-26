@@ -14,7 +14,7 @@ descrf = []
 geofied = []
 cloc = "California. United States"
 cards = []
-colnames=[
+colnames=[   # renaming the column headings to make more sane
     'event',
     'group',
     'date',
@@ -51,36 +51,34 @@ def main():
     createKml(refined)
 
 
-#Open the CSV file, prep the data, return it
+#Open the CSV file, create a Dataframe, Copy it
+#To use later, return the copy
 def openCsv(bigframe):
     data = pd.DataFrame.copy(bigframe , deep=True)
     return data
 
+
+#take DataFrame make a dict
 def listify(data):
     for col in data:
         cols[col] = data[col].tolist()
 
-
-#combine prepped data, in a way we can use
-#def recombo(adds,cities,zips) :
-#    frames =[adds, cities, zips]
-#    rec = pd.concat(frames,axis=1, join='inner')
-#   clean = rec.to_records(index='False')
-#   return clean
-
 #take prepped data, extract addr return it
 def getGeo(cols, bigframe):
     for i in range(0, int(bigframe.shape[0])):
-        y = ''.join(map(str, str(cols["address"][i]))) + ' ' + str(cols["city"][i]) + ' ' + str(cols["zip"][i]) + ' ' + cloc
-        x = re.sub('^[0-9]|(nan)','',y)
-        clean = g.geocode(x)
-        geofied = "", str(cols["event"][i]), str(cols["address"][i]), str(cols["zip"][i]), "USA", str(clean.latitude), str(clean.longitude)
-        ti.sleep(.25)
-        print(geofied)
+        if "na" not in (str(cols["address"][i]), str(cols["city"][i]), str(cols["zip"][i])):
+            y = ''.join(map(str, str(cols["address"][i]))) + ' ' + str(cols["city"][i]) + ' ' + str(cols["zip"][i])
+            x = re.sub('^[0-9]|(nan)','',y)
+            clean = g.geocode(x)
+            geofied = str(cols["event"][i]), str(cols["address"][i]), str(cols["zip"][i]), "USA", str(clean.latitude), str(clean.longitude)
+            ti.sleep(.25)
+            print(geofied)
+        else:
+            continue
     return geofied
 
 
-def createKml(refined) :
+def createKml(refined):
    for n in refined :
        templates = [('  <Placemark>\n   <name>{}</name>\n', 'location'),
                     ('   <description>\n    {}\n', 'image'),
