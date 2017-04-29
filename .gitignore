@@ -7,3 +7,4 @@ sites/*/private
 .idea
 *Icon
 .DS_Store
+config.ini

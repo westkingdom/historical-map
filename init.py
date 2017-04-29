@@ -1,19 +1,23 @@
 import sys
 import pandas as pd
-from geopy.geocoders.googlev3 import GoogleV3 as geo
+from geopy.geocoders import Nominatim as geo
+import wksql as db
 import re
 import time as ti
-key="AIzaSyDqNjKIDLMRsBlOC8wlSdgWPET36uSsJjk"
-g = geo(key)
+import ConfigParser
+Config = ConfigParser.ConfigParser()
+Config.read("config.ini")
+g = geo()
 adds = []
 cities = []
 zips = []
 data = {}
 cols = {}
-descrf = []
+sudict = {"nan": "","na": ""}
 geofied = []
 cloc = "California. United States"
 cards = []
+key = ConfigSectionMap("APIS")['apikey']
 colnames=[   # renaming the column headings to make more sane
     'event',
     'group',
@@ -48,7 +52,8 @@ def main():
     #mod = recombo(adds, cities, zips)
     #descr = prepDescr()
     refined = getGeo(cols, bigframe)
-    createKml(refined)
+    todb(refined)
+    #createKml(refined)
 
 
 #Open the CSV file, create a Dataframe, Copy it
@@ -67,40 +72,44 @@ def listify(data):
 def getGeo(cols, bigframe):
     for i in range(0, int(bigframe.shape[0])):
         if "na" not in (str(cols["address"][i]), str(cols["city"][i]), str(cols["zip"][i])):
-            y = ''.join(map(str, str(cols["address"][i]))) + ' ' + str(cols["city"][i]) + ' ' + str(cols["zip"][i])
-            x = re.sub('^[0-9]|(nan)','',y)
-            clean = g.geocode(x)
-            geofied = str(cols["event"][i]), str(cols["address"][i]), str(cols["zip"][i]), "USA", str(clean.latitude), str(clean.longitude)
-            ti.sleep(.25)
-            print(geofied)
+            try:
+                qstring = ''.join(map(str, str(cols["address"][i]))) + ' ' + str(cols["city"][i]) + ' ' + str(cols["zip"][i]) #join each field together, for the query
+                print(qstring)
+                ststring = replace(qstring,sudict) #strip nan's
+                result = g.geocode(ststring)
+                geofied = str(cols["event"][i]), str(result.address), str(result.latitude), str(result.longitude)
+                ti.sleep(1.0)
+                print(geofied)
+            except: Exception
+            continue
         else:
             continue
     return geofied
 
+def todb(refined):
+    db.sqlconnect()
+    db.sqlcreate()
+    db.dbinstgeo(conn, thing=refined)
+    db.sqlclose()
 
-def createKml(refined):
-   for n in refined :
-       templates = [('  <Placemark>\n   <name>{}</name>\n', 'location'),
-                    ('   <description>\n    {}\n', 'image'),
-                    ('     {}\n', 'address'),
-                    ('     {}\n', 'postcode'),
-                    ('     {}\n', 'country'),
-                    ('     Year: AS <span class="year">{}</span>\n', 'year'),
-                    ('     Autocrat: <span class="autocrat">{}</span>\n', 'autocrat'),
-                    ('   </description>\n   <Point>\n    <coordinates>{},', 'lat'),
-                    ('{}</coordinates>\n   </Point>\n  </Placemark>\n', 'lng')]
-       value = lambda field, array: array[refined.index(field)].lstrip().rstrip()
-       print
-       '''<?xml version="1.0" encoding="UTF-8"?>
-       <kml xmlns="http://www.opengis.net/kml/2.2">
-        <Document>'''
-       # insert values into xml
-       for row in refined:
-           for t, f in templates:
-               print
-               t.format(value(f, row)),
 
-       print
-       ' </Document>\n</kml>'
+
+def replace(text,dic):
+    for i, j in dic.items():
+        text = text.replace(i, j)
+    return text
+
+def ConfigSectionMap(section):
+    dict1 = {}
+    options = Config.options(section)
+    for option in options:
+        try:
+            dict1[option] = Config.get(section, option)
+            if dict1[option] == -1:
+                DebugPrint("skip: %s" % option)
+        except:
+            print("exception on %s!" % option)
+            dict1[option] = None
+    return dict1
 if __name__ == '__main__':
     main()
