@@ -8,3 +8,4 @@ sites/*/private
 *Icon
 .DS_Store
 config.ini
+wk_history.db
