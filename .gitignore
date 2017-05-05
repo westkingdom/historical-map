@@ -7,5 +7,5 @@ sites/*/private
 .idea
 *Icon
 .DS_Store
-config.ini
+*config.ini
 wk_history.db

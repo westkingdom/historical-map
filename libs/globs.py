@@ -6,6 +6,7 @@ Config.read(os.path.expanduser('./config.ini'))
 key = Config.get('APIS', 'apikey')
 dbp = Config.get('DBS', 'db_path')
 conn = wdb.sqlconnect(dbp)
+table = Config.get('DBS', 'db_table')
 sudict = {"nan": "", "na": ""}
 refined = []
 data = {}
@@ -19,3 +20,4 @@ colnames = ['event', 'group', 'date',
     'contact', 'badParking', 'costs',
     'attendance', 'issues', 'other'
 ]
+kml = Config.get('KML','kml_path')

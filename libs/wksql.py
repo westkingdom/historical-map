@@ -1,5 +1,9 @@
-import sqlite3
+import sqlite3 as sq
 from sqlite3 import Error
+from libs import sqlitedb as sqcl, wk
+
+w = wk.WestKingdom
+table = 'wkhist'
 
 def sqlconnect(path):
     """ create a database connection to the SQLite database
@@ -8,7 +12,7 @@ def sqlconnect(path):
         :return: Connection object or None
         """
     try:
-        conn = sqlite3.connect(path)
+        conn = sq.connect(path)
         return conn
     except Error as e:
         print(e)
@@ -16,8 +20,7 @@ def sqlconnect(path):
     return None
 
 # Create table
-def sqlcreate(path):
-    conn = sqlite3.connect(path)
+def sqlcreate(conn):
     c = conn.cursor()
     c.execute('''CREATE TABLE `wkhist` (
 	`id`	INTEGER PRIMARY KEY ,
@@ -61,6 +64,7 @@ def dbcheck(path):
     c.execute('''SELECT  name FROM sqlite_master WHERE type = 'table' AND name = 'table_name';''')
     return c
 
+
 def dbpop(conn,list_con):
     c = conn.cursor()
     if list_con:
@@ -74,11 +78,64 @@ def dbpop(conn,list_con):
         last_row = "empty"
         return last_row
 
-def dbinstgeo(conn,thing):
+
+def insertgeo(conn,thing):
     c = conn.cursor()
     for th in thing:
         c.execute("INSERT INTO wkhist (fulladdr, lat, long) VALUES(?, ?, ?, ?)", th)
 
-# Insert a row of data
-#c.execute("INSERT INTO stocks VALUES ('2006-01-05','BUY','RHAT',100,35.14)")
+
+def check(conn, thing):
+    c = conn.cursor()
+    c.execute('SELECT * FROM {tn} WHERE id={cn}'.format(tn=table, cn=thing[3]))
+    this = c.fetchall()
+    if not this[0][26] == "Need Data":
+        return True
+    else:
+        return False
+
+def checkcoor(conn, mycount):
+    c = conn.cursor()
+    c.execute('SELECT * FROM {tn} WHERE id={cn}'.format(tn=table, cn=mycount))
+    this = c.fetchall()
+    if not this[0][26]:
+        return True
+    elif this[0][26]:
+        return False
+
+def fetch_database(database, table, filter_dict, case=None):
+    filter_dict = dict(filter_dict)
+    keys_list = filter_dict.keys()
+    statement = 'SELECT * FROM {}'.format(table)
+    if len(keys_list) > 0:
+        statement += ' WHERE '
+
+        for keys in keys_list:
+            if case is None:
+                key = keys
+            else:
+                key = '{}({})'.format(case, keys)
+
+            temp_data = filter_dict[keys]
+            temp_size = len(temp_data)
+
+            if keys_list.index(keys) != 0:
+                statement += ' AND '
+
+            if temp_size > 0:
+                for data in temp_data:
+                    if temp_data.index(data) == 0:
+                        statement += '{}="{}"'.format(key, data)
+                    else:
+                        statement += ' OR {}="{}"'.format(key, data)
+
+    return database.execute(statement).fetchall()
+
+def getpoints(conn):
+    c = conn.cursor()
+    c.execute('SELECT {ev},{ye},{fa},{lat},{lng} FROM {tn} WHERE {lat} IS NOT NULL AND {lat} != "Need Data"'
+              ''.format(tn=table, ev='event', ye='year', fa='fulladdr', lat='lat', lng='long'))
+    this = c.fetchall()
+    return this
+
 

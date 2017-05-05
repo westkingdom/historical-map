@@ -1,27 +1,39 @@
 import time as ti
-from geopy.geocoders import Nominatim as geo
-from libs import wksql as wdb, wkcsv as wcs, globs as gl
+from geopy.geocoders import Nominatim as Geo
+from geopy.exc import GeocoderTimedOut
+from libs import wksql as wdb, globs as gl
+conn = gl.conn
+g = Geo()
 
-g = geo()
+# take prepped data, extract addr return it
 
-#take prepped data, extract addr return it
-def getgeo(cols, bigframe):
+
+def geomain(cols, bigframe):
     for i in range(0, int(bigframe.shape[0])):
         if "na" not in (str(cols["address"][i]), str(cols["city"][i]), str(cols["zip"][i])):
             try:
                 mycount = i
-                qstring = ''.join(map(str, str(cols["address"][i]))) + ' ' + str(cols["city"][i]) + ' ' + str(cols["zip"][i]) #join each field together, for the query
-                ststring = replace(qstring,gl.sudict) #strip nan's
-                result = g.geocode(ststring) #run the gecoding
-                list_con = geofied(result, mycount) #build values for SQL query, avoiding SQL injections
-                wdb.dbpop(gl.conn,list_con) #add to DB
-                ti.sleep(1.0) #be nice to our apis
+                go = wdb.checkcoor(conn, mycount)
+                if go:
+                    print(mycount)
+                    qstring = combine(cols, i)
+                    ststring = replace(qstring, gl.sudict)  # strip nan's
+                    result = getgeo(ststring)  # run the gecoding
+                    list_con = geofied(result, mycount)  # build values for SQL query, avoiding SQL injections
+                    #stop = wdb.check(conn, list_con)
+                    #if not stop:
+                    wdb.dbpop(conn, list_con)  # add to DB
+                    print(str("Added new event" + str(list_con[0])))
+                    conn.commit()
+                    #else:
+                    #    continue
+                    ti.sleep(1.0)  # be nice to our apis
             except ValueError as e:
                 print(e)
         else:
-            wdb.sqlclose(gl.conn) #close the DB
             continue
-    return None
+    wdb.sqlclose(gl.conn)  # close the DB
+
 
 def geofied(result, mycount):
     list_con=[]
@@ -48,3 +60,16 @@ def replace(text,dic):
     for i, j in dic.items():
         text = text.replace(i, j)
     return text
+
+
+def combine(cols, i):
+    qstring = ''.join(map(str, str(cols["address"][i]))) + ' ' + str(cols["city"][i]) + ' ' + str(
+        cols["zip"][i])  # join each field together, for the query
+    return qstring
+
+def getgeo(ststring):
+    try:
+        result = g.geocode(ststring, timeout=2)
+        return result
+    except GeocoderTimedOut as e:
+        print("Error: geocode failed on input %s with message %s" % (ststring, e.msg))
