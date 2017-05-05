@@ -9,3 +9,6 @@ sites/*/private
 .DS_Store
 *config.ini
 wk_history.db
+__pycache__
+wkhist.kml
+libs/__pycache__/*

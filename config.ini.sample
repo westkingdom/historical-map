@@ -1,0 +1,10 @@
+[APIS]
+apikey = <yourkeyhere>
+googkey = <yourkeyhere>
+[DBS]
+db_path = wk_history.db
+db_table = wkhist
+[VARS]
+cloc = California. United States
+[KML]
+kml_path = wkhist.kml
