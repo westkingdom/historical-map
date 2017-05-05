@@ -24,6 +24,7 @@ def main():
     else:
         print("Please utilize one of the following arguments {},{},{}".format(args.init, args.kml, args.json))
 
+
 def initialize(data):
     wdb.sqlcreate(path)
     data.to_sql("wkhist",conn, if_exists="append")
