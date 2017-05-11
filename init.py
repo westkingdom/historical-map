@@ -6,24 +6,26 @@ refined = gl.refined
 data = gl.data
 
 def main():
-    parser = argparse.ArgumentParser(description="From WestKingdom Dataset to useable maps and interface")
-    group = parser.add_mutually_exclusive_group()
-    parser.add_argument("init", type=bool, help="Create Database")
-    parser.add_argument("kml", type=bool, help="Create a KML file for use in Gmaps or Gearth")
-    parser.add_argument("json", type=bool, help="Create Json for use in another interface")
-    args = parser.parse_args()
-    if args.init:
-        initialize(data)
-        build_dataset()
-    elif args.kml:
-        geocode_dataset(cols=gl.cols)
-        build_kmlfile()
-    elif args.json:
-        geocode_dataset(cols=gl.cols)
-        json_output()
-    else:
-        print("Please utilize one of the following arguments {},{},{}".format(args.init, args.kml, args.json))
-
+    #parser = argparse.ArgumentParser(description="From WestKingdom Dataset to useable maps and interface")
+    #group = parser.add_mutually_exclusive_group()
+    #parser.add_argument("init", type=bool, help="Create Database")
+    #parser.add_argument("kml", type=bool, help="Create a KML file for use in Gmaps or Gearth")
+    #parser.add_argument("json", type=bool, help="Create Json for use in another interface")
+    #args = parser.parse_args()
+    #if args.init:
+    #    initialize(data)
+    #    build_dataset()
+    #elif args.kml:
+    #    geocode_dataset(cols=gl.cols)
+    #    build_kmlfile()
+    #elif args.json:
+    #    geocode_dataset(cols=gl.cols)
+    #    json_output()
+    #else:
+    #    print("Please utilize one of the following arguments {},{},{}".format(args.init, args.kml, args.json))
+    #cols= build_dataset(data)
+    #geocode_dataset(cols)
+    build_kmlfile()
 
 def initialize(data):
     wdb.sqlcreate(path)
@@ -31,8 +33,9 @@ def initialize(data):
     wdb.sqlclose(conn)
 
 
-def build_dataset():
+def build_dataset(data):
     cols = wcsv.prepdata(data) # turn data into lists
+    return cols
 
 
 def geocode_dataset(cols):

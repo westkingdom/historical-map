@@ -55,10 +55,14 @@ def sqlcreate(conn):
 );''')
     print(sqlite3.version)
 
+
+# close the connections after syncing the changes
 def sqlclose(conn):
     conn.commit()
     conn.close()
 
+
+# check the DB path
 def dbcheck(path):
     conn = sqlconnect(path)
     c = conn.cursor()
@@ -66,6 +70,7 @@ def dbcheck(path):
     return c
 
 
+#Populate the database with initial data
 def dbpop(conn,list_con):
     c = conn.cursor()
     if list_con:
@@ -80,12 +85,13 @@ def dbpop(conn,list_con):
         return last_row
 
 
+ # insert data as it is retrieved
 def insertgeo(conn,thing):
     c = conn.cursor()
     for th in thing:
         c.execute("INSERT INTO wkhist (fulladdr, lat, long) VALUES(?, ?, ?, ?)", th)
 
-
+ # Look to see if the value is 'Need Data' return boolean
 def check(conn, thing):
     c = conn.cursor()
     c.execute('SELECT * FROM {tn} WHERE id={cn}'.format(tn=table, cn=thing[3]))
@@ -94,7 +100,7 @@ def check(conn, thing):
         return True
     else:
         return False
-
+ # Check to see if the value is a coordinate, or see if it is null
 def checkcoor(conn, mycount):
     c = conn.cursor()
     c.execute('SELECT * FROM {tn} WHERE id={cn}'.format(tn=table, cn=mycount))
@@ -103,7 +109,7 @@ def checkcoor(conn, mycount):
         return True
     elif this[0][26]:
         return False
-
+ # Example function
 def fetch_database(database, table, filter_dict, case=None):
     filter_dict = dict(filter_dict)
     keys_list = filter_dict.keys()
@@ -132,13 +138,14 @@ def fetch_database(database, table, filter_dict, case=None):
 
     return database.execute(statement).fetchall()
 
+ # Query to obtain the points, full address, event name and society year
 def getpoints(conn):
     c = conn.cursor()
-    c.execute('SELECT {ev},{ye},{fa},{lat},{lng} FROM {tn} WHERE {lat} IS NOT NULL AND {lat} != "Need Data"'
+    c.execute('SELECT {ev},{ye},{fa},{lat},{lng} FROM {tn} WHERE  {lng} IS NOT NULL AND {lng} != "Need Data"'
               ''.format(tn=table, ev='event', ye='year', fa='fulladdr', lat='lat', lng='long'))
     this = c.fetchall()
     return this
-
+ # Generic function to turn the queried data to json
 def pntstojson(query, args, conn):
     cur = conn.cursor()
     cur.execute(query, args)

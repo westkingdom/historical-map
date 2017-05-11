@@ -7,16 +7,15 @@ g = Geo()
 
 # take prepped data, extract addr return it
 
-
 def geomain(cols, bigframe):
-    for i in range(0, int(bigframe.shape[0])):
-        if "na" not in (str(cols["address"][i]), str(cols["city"][i]), str(cols["zip"][i])):
+    for i in range(0, int(bigframe.shape[0])): #Fore each member of a list in the dict
+        if "na" not in (str(cols["address"][i]), str(cols["city"][i]), str(cols["zip"][i])): #check for 'na's pass on them
             try:
                 mycount = i
-                go = wdb.checkcoor(conn, mycount)
+                go = wdb.checkcoor(conn, mycount) #See if there are coordinates already, if so - skip
                 if go:
-                    print(mycount)
-                    qstring = combine(cols, i)
+                    print(mycount) #TODO get rid of thise once things are working well
+                    qstring = combine(cols, i) 
                     ststring = replace(qstring, gl.sudict)  # strip nan's
                     result = getgeo(ststring)  # run the gecoding
                     list_con = geofied(result, mycount)  # build values for SQL query, avoiding SQL injections
@@ -27,14 +26,14 @@ def geomain(cols, bigframe):
                     conn.commit()
                     #else:
                     #    continue
-                    ti.sleep(1.0)  # be nice to our apis
+                    ti.sleep(1.0)  # be nice to our apis limit the number of requests
             except ValueError as e:
                 print(e)
         else:
             continue
     wdb.sqlclose(gl.conn)  # close the DB
 
-
+#Check and ensure that the data is sane, if it is null, add a note 'Need Data'
 def geofied(result, mycount):
     list_con=[]
     if result:
@@ -56,17 +55,19 @@ def geofied(result, mycount):
         list.append(list_con, mycount)
         return list_con
 
+#simple function to replace the values of the given items
 def replace(text,dic):
     for i, j in dic.items():
         text = text.replace(i, j)
     return text
 
-
+# String function to concatenate for a query
 def combine(cols, i):
     qstring = ''.join(map(str, str(cols["address"][i]))) + ' ' + str(cols["city"][i]) + ' ' + str(
         cols["zip"][i])  # join each field together, for the query
     return qstring
 
+# The muscle that queries the Geocoder service
 def getgeo(ststring):
     try:
         result = g.geocode(ststring, timeout=2)

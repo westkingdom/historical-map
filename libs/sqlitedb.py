@@ -1,6 +1,13 @@
 import os
 import sqlite3
+
 from libs import globs as gl
+
+###
+# Generic SQLite class
+# Not currently used
+# After refactor will be used
+###
 
 class SqliteDB:
     def __init__(self):
